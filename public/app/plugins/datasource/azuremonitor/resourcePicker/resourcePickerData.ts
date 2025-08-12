@@ -415,6 +415,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<
     return newSelectedRows;
   }
 }
+
 export const createFilter = (filters: { subscriptions: string[]; types: string[]; locations: string[] }) => {
   let filtersQuery = '';
   if (filters) {
