@@ -493,7 +493,14 @@
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
     "alert-manager-picker": {
-      "noOptionsMessage-no-datasources-found": "No datasources found"
+      "converted-badge": "Converted",
+      "converted-configs-group": "Converted Configurations",
+      "external-alertmanagers-group": "External Alertmanagers",
+      "noOptionsMessage-no-datasources-found": "No datasources found",
+      "read-only-badge": "Read-only",
+      "read-only-badge-description": "This is an imported configuration that cannot be edited",
+      "read-only-tooltip": "This imported Alertmanager configuration was loaded via the Prometheus API. This configuration is merged with the main Grafana configuration and is read-only in the UI.",
+      "selected-converted-tooltip": "This configuration was imported using the Prometheus API and merged with Grafana's alerting setup. It can be changed only via the API."
     },
     "alert-menu": {
       "copy-link": "Copy link",

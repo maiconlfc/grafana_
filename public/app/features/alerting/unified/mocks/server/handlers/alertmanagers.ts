@@ -171,6 +171,14 @@ const getGroupsHandler = () =>
     HttpResponse.json([])
   );
 
+const getExtraAlertmanagerConfigsHandler = () =>
+  http.get('/api/alertmanager/grafana/config/api/v1/alerts', () => {
+    // Return alertmanager config with sample extra configs for testing
+    const extraConfigs = [{ identifier: 'external-prometheus-am' }, { identifier: 'test-config-123' }];
+
+    return HttpResponse.json({ extra_config: extraConfigs });
+  });
+
 const handlers = [
   alertmanagerAlertsListHandler(),
   grafanaAlertingConfigurationStatusHandler(),
@@ -181,5 +189,6 @@ const handlers = [
   testReceiversHandler(),
   getGroupsHandler(),
   getAlertmanagerStatusHandler(),
+  getExtraAlertmanagerConfigsHandler(),
 ];
 export default handlers;

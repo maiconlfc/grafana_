@@ -230,6 +230,7 @@ export const NotificationPoliciesList = () => {
           </Stack>
         </Alert>
       )}
+
       {hasPoliciesData && (
         <Stack direction="column" gap={1}>
           <NotificationPoliciesFilter

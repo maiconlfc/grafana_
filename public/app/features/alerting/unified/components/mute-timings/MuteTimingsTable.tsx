@@ -107,6 +107,7 @@ export const TimeIntervalsTable = () => {
           </>
         )}
       </Stack>
+
       {items.length > 0 ? <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} /> : null}
       {items.length === 0 && (
         <>
