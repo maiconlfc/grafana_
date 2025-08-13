@@ -64,9 +64,11 @@ export interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onQueryOpenChanged?: (status?: boolean | undefined) => void;
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
+  isOpen?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -369,6 +371,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
+        <MaybeQueryLibrarySaveButton query={query} app={this.props.app} />
+        <ReplaceQueryFromLibrary
+          datasourceFilters={datasource?.name ? [datasource.name] : []}
+          onSelectQuery={(query) => {
+            onQueryReplacedFromLibrary?.();
+            onReplace?.(query);
+          }}
+          app={this.props.app}
+        />
+
         {hasEditorHelp && (
           <QueryOperationToggleAction
             title={t('query-operation.header.datasource-help', 'Show data source help')}
@@ -378,18 +390,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <MaybeQueryLibrarySaveButton query={query} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
           onClick={this.onCopyQuery}
-        />
-        <ReplaceQueryFromLibrary
-          datasourceFilters={datasource?.name ? [datasource.name] : []}
-          onSelectQuery={(query) => {
-            onQueryReplacedFromLibrary?.();
-            onReplace?.(query);
-          }}
         />
         {!hideHideQueryButton ? (
           <QueryOperationToggleAction
@@ -433,7 +437,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization, collapsable, hideActionButtons } = this.props;
+    const { query, index, visualization, collapsable, hideActionButtons, isOpen, onQueryOpenChanged } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
@@ -459,6 +463,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           index={index}
           headerElement={this.renderHeader}
           actions={hideActionButtons ? undefined : this.renderActions}
+          isOpen={isOpen}
+          onOpen={onQueryOpenChanged}
         >
           <div className={rowClasses} id={this.id}>
             <ErrorBoundaryAlert>
@@ -524,24 +530,26 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: { query: DataQuery }) {
+function MaybeQueryLibrarySaveButton(props: { query: DataQuery; app?: CoreApp }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query);
+  return renderSaveQueryButton(props.query, props.app);
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {
   datasourceFilters: string[];
   onSelectQuery: (query: DataQuery) => void;
+  app?: CoreApp;
 }
 
 function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
   datasourceFilters,
   onSelectQuery,
+  app,
 }: ReplaceQueryFromLibraryProps<TQuery>) {
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onReplaceQueryFromLibrary = () => {
-    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true });
+    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true, context: app });
   };
 
   return queryLibraryEnabled ? (
@@ -549,6 +557,8 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
       title={t('query-operation.header.replace-query-from-library', 'Replace with query from library')}
       icon="book"
       onClick={onReplaceQueryFromLibrary}
+      isGroupEnd
+      isHighlighted
     />
   ) : null;
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
-
 	"github.com/grafana/grafana/apps/iam/pkg/app"
 )
 
@@ -27,13 +26,6 @@ func main() {
 		panic(err)
 	}
 
-	// Load the kube config
-	kubeConfig, err := LoadInClusterConfig()
-	if err != nil {
-		logging.DefaultLogger.With("error", err).Error("Unable to load kubernetes configuration")
-		panic(err)
-	}
-
 	// Set up tracing
 	if cfg.OTelConfig.Host != "" {
 		simple.SetTraceProvider(simple.OpenTelemetryConfig{
@@ -46,7 +38,7 @@ func main() {
 
 	// Create the operator config and the runner
 	operatorConfig := operator.RunnerConfig{
-		KubeConfig: kubeConfig.RestConfig,
+		KubeConfig: cfg.KubeConfig.RestConfig,
 		WebhookConfig: operator.RunnerWebhookConfig{
 			Port: cfg.WebhookServer.Port,
 			TLSConfig: k8s.TLSConfig{
@@ -58,6 +50,7 @@ func main() {
 			Enabled: true,
 		},
 	}
+
 	runner, err := operator.NewRunner(operatorConfig)
 	if err != nil {
 		logging.DefaultLogger.With("error", err).Error("Unable to create operator runner")
@@ -68,9 +61,14 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
+	// Create app config from operator config
+	appCfg := app.AppConfig{
+		ZanzanaAddr: cfg.ZanzanaClient.Addr,
+	}
+
 	// Run
 	logging.DefaultLogger.Info("Starting operator")
-	err = runner.Run(ctx, app.Provider(cfg))
+	err = runner.Run(ctx, app.Provider(appCfg))
 	if err != nil {
 		logging.DefaultLogger.With("error", err).Error("Operator exited with error")
 		panic(err)

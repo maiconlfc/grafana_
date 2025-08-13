@@ -7,20 +7,25 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/simple"
+	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/apis"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/apps/iam/pkg/watchers"
+	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 )
 
-func Provider(appCfg app.SpecificConfig) app.Provider {
+type AppConfig = reconcilers.AppConfig
+
+func Provider(appCfg AppConfig) app.Provider {
 	return simple.NewAppProvider(apis.LocalManifest(), appCfg, New)
 }
 
 func New(cfg app.Config) (app.App, error) {
-	coreroleWatcher, err := watchers.NewCoreRoleWatcher()
+	folderReconciler, err := reconcilers.NewFolderReconciler(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create CoreRoleWatcher: %w", err)
+		return nil, fmt.Errorf("unable to create FolderReconciler: %w", err)
 	}
+
+	logging.DefaultLogger.Info("FolderReconciler created")
 
 	config := simple.AppConfig{
 		Name:       cfg.ManifestData.AppName,
@@ -39,8 +44,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: v0alpha1.GlobalRoleBindingKind(),
 			},
 			{
-				Kind:    v0alpha1.CoreRoleKind(),
-				Watcher: coreroleWatcher,
+				Kind: v0alpha1.CoreRoleKind(),
 			},
 			{
 				Kind: v0alpha1.RoleKind(),
@@ -64,6 +68,12 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: v0alpha1.ServiceAccountKind(),
 			},
 		},
+		UnmanagedKinds: []simple.AppUnmanagedKind{
+			{
+				Kind:       foldersKind.FolderKind(),
+				Reconciler: folderReconciler,
+			},
+		},
 	}
 
 	// Create the App
@@ -74,5 +84,6 @@ func New(cfg app.Config) (app.App, error) {
 
 	// Validate the capabilities against the provided manifest to make sure there isn't a mismatch
 	err = a.ValidateManifest(cfg.ManifestData)
+
 	return a, err
 }
