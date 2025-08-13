@@ -1,9 +1,12 @@
 import { CSSProperties, ReactNode } from 'react';
 
+import { config } from '@grafana/runtime';
+
 import { SelectableValue } from './select';
 
 export enum ActionType {
   Fetch = 'fetch',
+  Proxy = 'proxy',
 }
 
 type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
@@ -11,11 +14,8 @@ type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
 export interface Action {
   type: ActionType;
   title: string;
-
-  // Options for the selected type
-  // Currently this is required because there is only one valid type (fetch)
-  // once multiple types are valid, usage of this will need to be optional
-  [ActionType.Fetch]: FetchOptions;
+  [ActionType.Fetch]?: FetchOptions;
+  [ActionType.Proxy]?: ProxyOptions;
   confirmation?: string;
   oneClick?: boolean;
   variables?: ActionVariable[];
@@ -44,12 +44,17 @@ export enum ActionVariableType {
   String = 'string',
 }
 
-interface FetchOptions {
+export interface FetchOptions {
   method: HttpRequestMethod;
   url: string;
   body?: string;
   queryParams?: Array<[string, string]>;
   headers?: Array<[string, string]>;
+}
+
+export interface ProxyOptions extends FetchOptions {
+  datasourceType: SupportedDataSourceTypes;
+  datasourceUid: string;
 }
 
 export enum HttpRequestMethod {
@@ -71,10 +76,23 @@ export const contentTypeOptions: SelectableValue[] = [
   { label: 'application/x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
 ];
 
+export const requestMethodOptions: SelectableValue[] = [
+  { label: 'Direct', value: ActionType.Fetch },
+  ...(config.featureToggles.vizActionsAuth
+    ? [
+        {
+          label: 'Proxy',
+          value: ActionType.Proxy,
+          description: 'Use configured datasource with authentication',
+        },
+      ]
+    : []),
+];
+
 export const defaultActionConfig: Action = {
   type: ActionType.Fetch,
   title: '',
-  fetch: {
+  [ActionType.Fetch]: {
     url: '',
     method: HttpRequestMethod.POST,
     body: '{}',
@@ -84,3 +102,7 @@ export const defaultActionConfig: Action = {
 };
 
 export type ActionVariableInput = { [key: string]: string };
+
+export enum SupportedDataSourceTypes {
+  Infinity = 'yesoreyeram-infinity-datasource',
+}

@@ -3,22 +3,30 @@ import { memo } from 'react';
 
 import {
   Action,
+  ActionType,
+  ActionVariable,
+  DataSourceInstanceSettings,
   GrafanaTheme2,
   httpMethodOptions,
   HttpRequestMethod,
   VariableSuggestion,
-  ActionVariable,
+  requestMethodOptions,
+  ProxyOptions,
+  FetchOptions,
+  SupportedDataSourceTypes,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config, DataSourcePicker } from '@grafana/runtime';
 import {
-  Switch,
+  ColorPicker,
   Field,
   InlineField,
   InlineFieldRow,
-  RadioButtonGroup,
   JSONFormatter,
+  RadioButtonGroup,
+  Select,
+  Switch,
   useStyles2,
-  ColorPicker,
   useTheme2,
 } from '@grafana/ui';
 
@@ -37,9 +45,63 @@ interface ActionEditorProps {
 
 const LABEL_WIDTH = 13;
 
+const DEFAULT_HTTP_CONFIG: FetchOptions = {
+  method: HttpRequestMethod.POST,
+  url: '',
+  body: '{}',
+  queryParams: [],
+  headers: [['Content-Type', 'application/json']],
+};
+
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
+  const getActionConfig = (): FetchOptions | ProxyOptions => {
+    if (value.type === ActionType.Proxy) {
+      return (
+        value[ActionType.Proxy] || {
+          ...DEFAULT_HTTP_CONFIG,
+          datasourceUid: '',
+          datasourceType: SupportedDataSourceTypes.Infinity,
+        }
+      );
+    }
+
+    return value[ActionType.Fetch] || DEFAULT_HTTP_CONFIG;
+  };
+
+  const updateActionConfig = (updates: Partial<FetchOptions | ProxyOptions>) => {
+    const configKey = value.type === ActionType.Proxy ? ActionType.Proxy : ActionType.Fetch;
+    const baseConfig = getActionConfig();
+
+    // @TODO revisit
+    const isProxyConfig = (config: FetchOptions | ProxyOptions): config is ProxyOptions =>
+      configKey === ActionType.Proxy && 'datasourceUid' in config;
+
+    if (isProxyConfig(baseConfig)) {
+      const proxyConfig = baseConfig;
+      const updatedConfig = {
+        ...proxyConfig,
+        ...updates,
+        datasourceType: SupportedDataSourceTypes.Infinity,
+        datasourceUid: proxyConfig.datasourceUid || '',
+      };
+      onChange(index, {
+        ...value,
+        [configKey]: updatedConfig,
+      });
+    } else {
+      const updatedConfig = {
+        ...baseConfig,
+        ...updates,
+      };
+      onChange(index, {
+        ...value,
+        [configKey]: updatedConfig,
+      });
+    }
+  };
 
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
@@ -54,33 +116,15 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
   };
 
   const onUrlChange = (url: string) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        url,
-      },
-    });
+    updateActionConfig({ url });
   };
 
   const onBodyChange = (body: string) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        body,
-      },
-    });
+    updateActionConfig({ body });
   };
 
   const onMethodChange = (method: HttpRequestMethod) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        method,
-      },
-    });
+    updateActionConfig({ method });
   };
 
   const onVariablesChange = (variables: ActionVariable[]) => {
@@ -91,23 +135,11 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
   };
 
   const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        queryParams,
-      },
-    });
+    updateActionConfig({ queryParams });
   };
 
   const onHeadersChange = (headers: Array<[string, string]>) => {
-    onChange(index, {
-      ...value,
-      fetch: {
-        ...value.fetch,
-        headers,
-      },
-    });
+    updateActionConfig({ headers });
   };
 
   const onBackgroundColorChange = (backgroundColor: string) => {
@@ -118,6 +150,58 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         backgroundColor,
       },
     });
+  };
+
+  const onDatasourceChange = (ds: DataSourceInstanceSettings) => {
+    onChange(index, {
+      ...value,
+      [ActionType.Proxy]: {
+        ...getActionConfig(),
+        datasourceUid: ds.uid,
+        datasourceType: SupportedDataSourceTypes.Infinity,
+      },
+    });
+  };
+
+  const onActionTypeChange = (actionType: ActionType) => {
+    const currentConfig = getActionConfig();
+
+    const baseAction = {
+      type: actionType,
+      title: value.title,
+      confirmation: value.confirmation,
+      oneClick: value.oneClick,
+      variables: value.variables,
+      style: value.style,
+    };
+
+    if (actionType === ActionType.Proxy) {
+      const newAction: Action = {
+        ...baseAction,
+        [ActionType.Proxy]: {
+          method: currentConfig.method,
+          url: currentConfig.url,
+          body: currentConfig.body,
+          queryParams: currentConfig.queryParams,
+          headers: currentConfig.headers,
+          datasourceUid: '',
+          datasourceType: SupportedDataSourceTypes.Infinity,
+        },
+      };
+      onChange(index, newAction);
+    } else {
+      const newAction: Action = {
+        ...baseAction,
+        [ActionType.Fetch]: {
+          method: currentConfig.method,
+          url: currentConfig.url,
+          body: currentConfig.body,
+          queryParams: currentConfig.queryParams,
+          headers: currentConfig.headers,
+        },
+      };
+      onChange(index, newAction);
+    }
   };
 
   const renderJSON = (data = '{}') => {
@@ -133,9 +217,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     }
   };
 
+  const actionConfig = getActionConfig();
   const shouldRenderJSON =
-    value.fetch.method !== HttpRequestMethod.GET &&
-    value.fetch.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
+    actionConfig.method !== HttpRequestMethod.GET &&
+    actionConfig.headers?.some(
+      ([name, value]: [string, string]) => name === 'Content-Type' && value === 'application/json'
+    );
 
   return (
     <div className={styles.listItem}>
@@ -195,13 +282,33 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       )}
 
       <InlineFieldRow>
-        <InlineField
-          label={t('grafana-ui.action-editor.modal.action-method', 'Method')}
-          labelWidth={LABEL_WIDTH}
-          grow={true}
-        >
+        <InlineField label={t('grafana-ui.action-editor.modal.request-type', 'Request type')} labelWidth={LABEL_WIDTH}>
+          <Select
+            value={value.type}
+            options={requestMethodOptions}
+            onChange={(selected) => onActionTypeChange(selected.value!)}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      {config.featureToggles.vizActionsAuth && value.type === ActionType.Proxy && (
+        <InlineFieldRow>
+          <InlineField label={t('grafana-ui.action-editor.modal.connection', 'Connection')} labelWidth={LABEL_WIDTH}>
+            <DataSourcePicker
+              filter={(ds) => ds.type === SupportedDataSourceTypes.Infinity}
+              current={value?.[ActionType.Proxy]?.datasourceUid ?? undefined}
+              onChange={(ds) => onDatasourceChange(ds)}
+              noDefault={true}
+              placeholder={t('grafana-ui.action-editor.modal.connection-placeholder', 'Select a connection')}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
+      <InlineFieldRow>
+        <InlineField label={t('grafana-ui.action-editor.modal.action-method', 'Method')} labelWidth={LABEL_WIDTH}>
           <RadioButtonGroup<HttpRequestMethod>
-            value={value?.fetch.method}
+            value={actionConfig.method}
             options={httpMethodOptions}
             onChange={onMethodChange}
             fullWidth
@@ -212,7 +319,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       <InlineFieldRow>
         <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
           <SuggestionsInput
-            value={value.fetch.url}
+            value={actionConfig.url}
             onChange={onUrlChange}
             suggestions={suggestions}
             placeholder={t('actions.action-editor.placeholder-url', 'URL')}
@@ -232,22 +339,22 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         label={t('grafana-ui.action-editor.modal.action-query-params', 'Query parameters')}
         className={styles.fieldGap}
       >
-        <ParamsEditor value={value?.fetch.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
+        <ParamsEditor value={actionConfig.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
       <Field label={t('actions.action-editor.label-headers', 'Headers')}>
         <ParamsEditor
-          value={value?.fetch.headers ?? []}
+          value={actionConfig.headers ?? []}
           onChange={onHeadersChange}
           suggestions={suggestions}
           contentTypeHeader={true}
         />
       </Field>
 
-      {value?.fetch.method !== HttpRequestMethod.GET && (
+      {actionConfig.method !== HttpRequestMethod.GET && (
         <Field label={t('grafana-ui.action-editor.modal.action-body', 'Body')} className={styles.inputField}>
           <SuggestionsInput
-            value={value.fetch.body}
+            value={actionConfig.body}
             onChange={onBodyChange}
             suggestions={suggestions}
             type={HTMLElementType.TextAreaElement}
@@ -258,7 +365,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       {shouldRenderJSON && (
         <>
           <br />
-          {renderJSON(value?.fetch.body)}
+          {renderJSON(actionConfig.body)}
         </>
       )}
     </div>
