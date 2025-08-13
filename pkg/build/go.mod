@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.23.1
+go 1.23.8
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -20,7 +20,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
 	github.com/docker/docker v27.3.1+incompatible // @grafana/grafana-developer-enablement-squad
-	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-developer-enablement-squad
+	github.com/drone/drone-cli v1.9.0 // @grafana/grafana-developer-enablement-squad
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
 	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-developer-enablement-squad
@@ -35,12 +35,12 @@ require (
 	go.opentelemetry.io/otel v1.31.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.31.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.31.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.28.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/crypto v0.36.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.21.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.30.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.38.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.8.0 // indirect; @grafana/alerting-backend
-	golang.org/x/text v0.19.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/sync v0.12.0 // indirect; @grafana/alerting-backend
+	golang.org/x/text v0.23.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.67.1 // indirect; @grafana/plugins-platform-backend
@@ -61,7 +61,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/drone-runners/drone-runner-docker v1.8.2 // indirect
+	github.com/drone-runners/drone-runner-docker v1.8.3 // indirect
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
@@ -83,7 +83,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 // indirect
 	go.opentelemetry.io/otel/metric v1.31.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
-	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 	google.golang.org/genproto v0.0.0-20240820151423-278611b39280 // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9 // indirect
