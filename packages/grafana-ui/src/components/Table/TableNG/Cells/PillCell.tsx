@@ -116,7 +116,7 @@ export const getStyles: TableCellStyles = (theme, { textWrap, shouldOverflow }) 
       },
     }),
 
-    '> span': {
+    span: {
       display: 'flex',
       padding: theme.spacing(0.25, 0.75),
       borderRadius: theme.shape.radius.default,

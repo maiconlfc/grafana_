@@ -80,6 +80,18 @@ export const getGridStyles = (
       marginBlock: TABLE.CELL_PADDING,
     }),
     cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
+    cellClamp: css({
+      overflow: 'hidden',
+      justifyContent: 'flex-start !important',
+    }),
+    cellClampAuto: css({
+      // height properties need to override the default settings.
+      height: 'auto',
+      minHeight: 'none',
+      display: '-webkit-box',
+      '-webkit-box-orient': 'vertical',
+      overflowY: 'hidden',
+    }),
     noDataNested: css({
       height: TABLE.NESTED_NO_DATA_HEIGHT,
       display: 'flex',

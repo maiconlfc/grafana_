@@ -88,6 +88,19 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(cellOptions?.wrapText);
 }
 
+export function getMaxHeight(field: Field): number | undefined {
+  return field.config?.custom?.cellOptions?.maxHeight;
+}
+
+function clampByMaxHeightLines(numLines: number, field: Field, lineHeight = TABLE.LINE_HEIGHT): number {
+  const maxHeight = getMaxHeight(field);
+  if (typeof maxHeight !== 'number') {
+    return numLines;
+  }
+
+  return Math.min(numLines, Math.floor(maxHeight / lineHeight));
+}
+
 /**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
@@ -122,12 +135,12 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
  * @internal wraps the uwrap count function to ensure that it is given a string.
  */
 export function wrapUwrapCount(count: Count): LineCounter {
-  return (value, width) => {
+  return (value, width, field) => {
     if (value == null) {
       return 1;
     }
 
-    return count(String(value), width);
+    return clampByMaxHeightLines(count(String(value), width), field);
   };
 }
 
@@ -135,7 +148,7 @@ export function wrapUwrapCount(count: Count): LineCounter {
  * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
  */
 export function getTextLineEstimator(avgCharWidth: number): LineCounter {
-  return (value, width) => {
+  return (value, width, field) => {
     if (!value) {
       return -1;
     }
@@ -148,7 +161,7 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
     }
 
     const charsPerLine = width / avgCharWidth;
-    return strValue.length / charsPerLine;
+    return clampByMaxHeightLines(strValue.length / charsPerLine, field);
   };
 }
 
@@ -156,24 +169,14 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
  * @internal
  */
 export function getDataLinksCounter(): LineCounter {
-  const linksCountCache: Record<string, number> = {};
-
-  // when we render links, we need to filter out the invalid links. since the call to `getLinks` is expensive,
-  // we'll cache the result and reuse it for every row in the table. this cache is cleared when line counts are
-  // rebuilt anytime from the `useRowHeight` hook, and that includes adding and removing data links.
   return (_value, _width, field) => {
-    const cacheKey = getDisplayName(field);
-    if (linksCountCache[cacheKey] === undefined) {
-      let count = 0;
-      for (const l of field.config?.links ?? []) {
-        if (l.onClick || l.url) {
-          count += 1;
-        }
+    let count = 0;
+    for (const l of field.config?.links ?? []) {
+      if (l.onClick || l.url) {
+        count += 1;
       }
-      linksCountCache[cacheKey] = count;
     }
-
-    return linksCountCache[cacheKey];
+    return clampByMaxHeightLines(count, field);
   };
 }
 
@@ -184,7 +187,7 @@ const PILLS_GAP = 4; // gap between pills
 export function getPillLineCounter(measureWidth: (value: string) => number): LineCounter {
   const widthCache: Record<string, number> = {};
 
-  return (value, width) => {
+  return (value, width, field) => {
     if (value == null) {
       return 0;
     }
@@ -213,7 +216,7 @@ export function getPillLineCounter(measureWidth: (value: string) => number): Lin
       }
     }
 
-    return lines;
+    return clampByMaxHeightLines(lines, field, TABLE.LINE_HEIGHT + PILLS_GAP);
   };
 }
 

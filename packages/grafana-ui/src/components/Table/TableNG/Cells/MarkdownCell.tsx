@@ -39,7 +39,7 @@ export const getStyles: TableCellStyles = (theme) =>
     },
     // for elements like `p`, `h*`, etc. which have an inherent margin,
     // we want to remove the bottom margin for the last one in the container.
-    '& > .markdown-container > *:last-child': {
+    '& .markdown-container > *:last-child': {
       marginBottom: 0,
     },
   });

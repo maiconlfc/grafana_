@@ -69,6 +69,7 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getMaxHeight,
   getVisibleFields,
   isCellInspectEnabled,
   shouldTextOverflow,
@@ -439,8 +440,7 @@ export function TableNG(props: TableNGProps) {
 
         result.cellRootRenderers[displayName] = renderCellRoot;
 
-        // this fires second
-        const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+        const renderBasicCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const rowIdx = props.row.__index;
           const value = props.row[props.column.key];
           // TODO: it would be nice to get rid of passing height down as a prop. but this value
@@ -483,6 +483,35 @@ export function TableNG(props: TableNGProps) {
             </>
           );
         };
+
+        // renderCellContnet fires second
+        let renderCellContent = renderBasicCellContent;
+
+        const maxHeight = getMaxHeight(field);
+        if (maxHeight) {
+          let maxHeightClassName = styles.cellClamp;
+          const inlineStyles: CSSProperties = { maxHeight };
+          if (
+            cellType === TableCellDisplayMode.Auto ||
+            cellType === TableCellDisplayMode.ColorBackground ||
+            cellType === TableCellDisplayMode.ColorText
+          ) {
+            maxHeightClassName = clsx(maxHeightClassName, styles.cellClampAuto);
+            inlineStyles.WebkitLineClamp = String(Math.floor(maxHeight / TABLE.LINE_HEIGHT));
+          } else {
+            maxHeightClassName = clsx(maxHeightClassName, defaultCellStyles, cellSpecificStyles);
+          }
+
+          const renderMaxHeightCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>) => {
+            return (
+              <div className={maxHeightClassName} style={inlineStyles}>
+                {renderBasicCellContent(props)}
+              </div>
+            );
+          };
+
+          renderCellContent = renderMaxHeightCellContent;
+        }
 
         const column: TableColumn = {
           field,

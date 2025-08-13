@@ -24,7 +24,7 @@ export const getStyles: TableCellStyles = (theme, { textWrap, textAlign }) =>
       justifyContent: 'center',
       alignItems: getJustifyContent(textAlign),
     }),
-    '> a': {
+    a: {
       flexWrap: 'nowrap',
       ...(!textWrap && {
         paddingInline: theme.spacing(0.5),
