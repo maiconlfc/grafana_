@@ -38,7 +38,7 @@ require (
 	golang.org/x/crypto v0.28.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.30.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
+	golang.org/x/oauth2 v0.30.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.8.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.19.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
