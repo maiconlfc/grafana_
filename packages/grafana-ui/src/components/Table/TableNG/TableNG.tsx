@@ -383,13 +383,15 @@ export function TableNG(props: TableNGProps) {
           cellType === TableCellDisplayMode.ColorBackground ||
           cellType === TableCellDisplayMode.ColorText ||
           Boolean(applyToRowBgFn);
-        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
+        const maxHeight = getMaxHeight(field);
+        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow, maxHeight };
 
         result.colsWithTooltip[displayName] = withTooltip;
 
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
         const linkStyles = getLinkStyles(theme, canBeColorized);
+        const cellParentStyles = clsx(defaultCellStyles, cellSpecificStyles, linkStyles);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -432,7 +434,7 @@ export function TableNG(props: TableNGProps) {
             <Cell
               key={key}
               {...props}
-              className={clsx(props.className, defaultCellStyles, cellSpecificStyles, linkStyles)}
+              className={clsx(props.className, { [cellParentStyles]: maxHeight == null })}
               style={style}
             />
           );
@@ -440,7 +442,8 @@ export function TableNG(props: TableNGProps) {
 
         result.cellRootRenderers[displayName] = renderCellRoot;
 
-        const renderBasicCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+        // this fires second
+        const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const rowIdx = props.row.__index;
           const value = props.row[props.column.key];
           // TODO: it would be nice to get rid of passing height down as a prop. but this value
@@ -450,7 +453,7 @@ export function TableNG(props: TableNGProps) {
           const height = rowHeightFn(props.row);
           const frame = data;
 
-          return (
+          let result = (
             <>
               {renderFieldCell({
                 cellOptions,
@@ -482,36 +485,17 @@ export function TableNG(props: TableNGProps) {
               )}
             </>
           );
-        };
 
-        // renderCellContnet fires second
-        let renderCellContent = renderBasicCellContent;
-
-        const maxHeight = getMaxHeight(field);
-        if (maxHeight) {
-          let maxHeightClassName = styles.cellClamp;
-          const inlineStyles: CSSProperties = { maxHeight };
-          if (
-            cellType === TableCellDisplayMode.Auto ||
-            cellType === TableCellDisplayMode.ColorBackground ||
-            cellType === TableCellDisplayMode.ColorText
-          ) {
-            maxHeightClassName = clsx(maxHeightClassName, styles.cellClampAuto);
-            inlineStyles.WebkitLineClamp = String(Math.floor(maxHeight / TABLE.LINE_HEIGHT));
-          } else {
-            maxHeightClassName = clsx(maxHeightClassName, defaultCellStyles, cellSpecificStyles);
-          }
-
-          const renderMaxHeightCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>) => {
-            return (
-              <div className={maxHeightClassName} style={inlineStyles}>
-                {renderBasicCellContent(props)}
+          if (maxHeight != null) {
+            result = (
+              <div className={clsx(styles.cellClamp, cellParentStyles)} style={{ maxHeight }}>
+                {result}
               </div>
             );
-          };
+          }
 
-          renderCellContent = renderMaxHeightCellContent;
-        }
+          return result;
+        };
 
         const column: TableColumn = {
           field,
