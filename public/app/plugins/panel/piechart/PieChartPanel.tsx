@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
+import { PieChartLegendOptions, PieChartSortOptions, PieChartLegendValues, Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -67,6 +67,7 @@ export function PieChartPanel(props: Props) {
             fieldDisplayValues={fieldDisplayValues}
             tooltipOptions={options.tooltip}
             pieType={options.pieType}
+            pieSorting={options.pieSorting}
             displayLabels={options.displayLabels}
           />
         );
@@ -81,19 +82,12 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
   if (legendOptions.showLegend === false) {
     return undefined;
   }
+
+  const sortedDisplayValues = displayValues.sort(comparePieChartItemsByValue(props.options.pieSorting));
+
   const total = displayValues.filter(filterDisplayItems).reduce(sumDisplayItemsReducer, 0);
 
-  const legendItems: VizLegendItem[] = displayValues
-    // Since the pie chart is always sorted, let's sort the legend as well.
-    .sort((a, b) => {
-      if (isNaN(a.display.numeric)) {
-        return 1;
-      } else if (isNaN(b.display.numeric)) {
-        return -1;
-      } else {
-        return b.display.numeric - a.display.numeric;
-      }
-    })
+  const legendItems: VizLegendItem[] = sortedDisplayValues
     .map<VizLegendItem | undefined>((value: FieldDisplay, idx: number) => {
       const hideFrom: HideSeriesConfig = value.field.custom?.hideFrom ?? {};
 
@@ -149,6 +143,28 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
       />
     </VizLayout.Legend>
   );
+}
+
+export function comparePieChartItemsByValue(
+  pieSorting: PieChartSortOptions
+): (a: FieldDisplay, b: FieldDisplay) => number {
+  return function (a: FieldDisplay, b: FieldDisplay) {
+    if (isNaN(a.display.numeric)) {
+      return 1;
+    }
+    if (isNaN(b.display.numeric)) {
+      return -1;
+    }
+
+    if (pieSorting === PieChartSortOptions.Descending) {
+      return b.display.numeric - a.display.numeric;
+    }
+    if (pieSorting === PieChartSortOptions.Ascending) {
+      return a.display.numeric - b.display.numeric;
+    }
+
+    return 0;
+  };
 }
 
 function hasFrames(fieldDisplayValues: FieldDisplay[]) {
