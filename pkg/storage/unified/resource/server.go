@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
+	"reflect"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -234,7 +237,7 @@ type ResourceServerOptions struct {
 	RingLifecycler *ring.BasicLifecycler
 }
 
-func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
 	}
@@ -482,8 +485,34 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			return nil, NewBadRequestError("secure storage not configured")
 		}
 
-		// See: https://github.com/grafana/grafana/pull/107803
-		return nil, NewBadRequestError("Saving secure values is not yet supported")
+		// Make sure the secure values are safe to save (just in case)
+		found := make(map[string]bool, len(secure))
+		for _, v := range secure {
+			if !v.Create.IsZero() {
+				return nil, NewBadRequestError("unable to create values in unified storage")
+			}
+			if v.Remove {
+				return nil, NewBadRequestError("unable to save remove command")
+			}
+			if v.Name == "" {
+				return nil, NewBadRequestError("secure value requires name")
+			}
+			found[v.Name] = true
+		}
+
+		// The "CanReference" check exists to avoid writing references to secrets
+		// the user should not allow granting access.  We only check it when the value changes
+		secureValuesChanged := event.ObjectOld == nil
+		if event.ObjectOld != nil {
+			oldSecureValues, _ := obj.GetSecureValues()
+			secureValuesChanged = reflect.DeepEqual(secure, oldSecureValues)
+		}
+		if secureValuesChanged {
+			names := slices.Collect(maps.Keys(found))
+			if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), names...); err != nil {
+				return nil, AsErrorResult(err)
+			}
+		}
 	}
 
 	if key.Namespace != obj.GetNamespace() {
