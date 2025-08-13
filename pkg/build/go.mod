@@ -22,7 +22,7 @@ require (
 	github.com/docker/docker v27.3.1+incompatible // @grafana/grafana-developer-enablement-squad
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-developer-enablement-squad
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
-	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
+	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
 	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-developer-enablement-squad
 	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
