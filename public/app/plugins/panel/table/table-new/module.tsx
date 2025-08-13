@@ -9,7 +9,13 @@ import {
   FieldConfigProperty,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
+import {
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+  TableCellTooltipPlacement,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -115,6 +121,46 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           category,
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addFieldNamePicker({
+          path: 'tooltip.field',
+          name: t('table-new.name-tooltip-by-field', 'Tooltip by field'),
+          description: t(
+            'table-new.description-tooltip-by-field',
+            'Render the value from a sibling field in a tooltip when hovering a cell in this field.'
+          ),
+          category: cellCategory,
+        })
+        .addSelect({
+          path: 'tooltip.placement',
+          name: t('table-new.name-tooltip-placement', 'Tooltip placement'),
+          category: cellCategory,
+          settings: {
+            options: [
+              {
+                label: t('table-new.tooltip-placement-options.label-auto', 'Auto'),
+                value: TableCellTooltipPlacement.Auto,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-top', 'Top'),
+                value: TableCellTooltipPlacement.Top,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-right', 'Right'),
+                value: TableCellTooltipPlacement.Right,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-bottom', 'Bottom'),
+                value: TableCellTooltipPlacement.Bottom,
+              },
+              {
+                label: t('table-new.tooltip-placement-options.label-left', 'Left'),
+                value: TableCellTooltipPlacement.Left,
+              },
+            ],
+          },
+          defaultValue: 'auto',
+          showIf: (cfg) => cfg.tooltip?.field !== undefined,
         });
     },
   })
