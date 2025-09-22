@@ -131,7 +131,7 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/oapi-codegen/oapi-codegen/v2 v2.3.0 // @grafana/grafana-as-code
-	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
+	github.com/olekukonko/tablewriter v1.1.0 // @grafana/grafana-backend-group
 	github.com/openfga/api/proto v0.0.0-20240906203051-102620ef2a66 // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20240926131254-992b301a003f // @grafana/identity-access-team
 	github.com/openfga/openfga v1.6.2 // @grafana/identity-access-team
@@ -492,6 +492,8 @@ require (
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/maypok86/otter v1.2.2 // indirect
+	github.com/olekukonko/errors v1.1.0 // indirect
+	github.com/olekukonko/ll v0.0.9 // indirect
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/pires/go-proxyproto v0.7.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
